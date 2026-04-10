@@ -208,7 +208,7 @@
             // Draw Bottom
             shape.moveTo(0, 0);
             if (r > 0) {
-                drawEdge(shape, 0, 0, w, 0, -hEdges[r - 1][c]);
+                drawEdge(shape, 0, 0, w, 0, hEdges[r - 1][c]); // Removed negative sign so it becomes a hole when top is a tab
             } else {
                 shape.lineTo(w, 0);
             }
@@ -246,9 +246,9 @@
             const size = Math.min(pieceW, pieceH) * 0.28; // tab size scalar
 
             const p = [
-                [0.35, 0],
-                [0.38, 0], [0.35, size], [0.45, size],
-                [0.55, size], [0.65, size], [0.62, 0],
+                [0.40, 0],
+                [0.48, 0], [0.30, size], [0.50, size],
+                [0.70, size], [0.52, 0], [0.60, 0],
                 [1.0, 0]
             ];
 
@@ -398,15 +398,15 @@
                   .to(em, { r: 1.0, g: 0.1, b: 0.5, duration: 0.15 })
                   .to(em, { r: 0.0, g: 0.0, b: 0.0, duration: 2.5, ease: "power2.out" });
 
-                // Aterrizaje mágico y elástico ultra exagerado (cae desde el aire)
+                // Aterrizaje mágico y elástico (cae desde el aire rebotando en el tablero sin atravesarlo)
                 gsap.fromTo(piece.position,
                     { z: 15 },
-                    { z: 0, duration: 2.0, ease: "elastic.out(1, 0.15)" }
+                    { z: 0, duration: 1.5, ease: "bounce.out" }
                 );
                 // "Latido" 3D de la pieza al encajar
                 gsap.fromTo(piece.scale,
                     { x: 1.5, y: 1.5, z: 1.5 },
-                    { x: 1, y: 1, z: 1, duration: 1.5, ease: "elastic.out(1, 0.15)" }
+                    { x: 1, y: 1, z: 1, duration: 1.5, ease: "elastic.out(1, 0.4)" }
                 );
 
                 // --- SISTEMA DE PARTÍCULAS: CORAZONES ROJOS Y ROSAS (Onda expansiva) ---
@@ -669,18 +669,15 @@
                     delay: (p.userData.r + p.userData.c) * 0.1, 
                     ease: "elastic.out(1, 0.4)" 
                 });
-                
-                // Rotación leve de todo el bloque
-                gsap.to(p.rotation, {x: -0.1, duration: 4, ease: "power2.inOut"});
 
-                // Oscilación de respiraciÃ³n para que el rompecabezas parezca "vivo"
+                // Oscilación de respiraciÃ³n para que el rompecabezas parezca "vivo" (sincronizado para todo el bloque)
                 gsap.to(p.position, {
                     z: "+=1.5",
                     duration: 3.0,
                     yoyo: true,
                     repeat: -1,
                     ease: "sine.inOut",
-                    delay: 4 + Math.random() * 0.5
+                    delay: 6.5
                 });
             });
 

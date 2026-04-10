@@ -637,6 +637,20 @@
         txtMesh.position.set(0, -2, -30);
         camera.add(txtMesh);
 
+        // Responsive text scaling
+        function updateTextScale() {
+            const aspect = window.innerWidth / window.innerHeight;
+            const vHeight = 2 * 30 * Math.tan((45 / 2) * Math.PI / 180);
+            const vWidth = vHeight * aspect;
+            let s = 1.0;
+            if (vWidth < 45) { // Text plane width is 45
+                s = (vWidth * 0.9) / 45; // Fill 90% of screen width
+            }
+            txtMesh.scale.setScalar(s);
+            txtMesh.userData.baseScale = s;
+        }
+        updateTextScale();
+
         function triggerFinale() {
             document.getElementById('ui-container').style.display = 'none';
             document.getElementById('progress').style.display = 'none';
@@ -755,9 +769,10 @@
 
             // 5. APARICIÓN MONUMENTAL DEL TEXTO 3D
             gsap.to(txtMesh.material, { opacity: 1, duration: 4, delay: 2.5, ease: "sine.inOut" });
-            // Latido constante del texto
+            // Latido constante del texto respetando la escala responsiva de mobile
+            const s = txtMesh.userData.baseScale || 1.0;
             gsap.to(txtMesh.scale, {
-                x: 1.1, y: 1.1, z: 1.1, 
+                x: s * 1.1, y: s * 1.1, z: s * 1.1, 
                 duration: 1.5, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 3
             });
         }
@@ -780,6 +795,7 @@
             if (composer) {
                 composer.setSize(window.innerWidth, window.innerHeight);
             }
+            updateTextScale();
         });
 
     </script>

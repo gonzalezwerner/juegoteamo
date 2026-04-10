@@ -138,11 +138,14 @@
         controls.maxPolarAngle = Math.PI / 2.1; // Limit pitch
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.6); // Super bright ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 3.0); // Mega bright ambient light
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffeebb, 1.0);
-        directionalLight.position.set(10, 20, 150); // Fixed high up in the scene
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+        directionalLight.position.set(20, 50, 150); // Fixed high up in the scene
         scene.add(directionalLight);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2.0);
+        hemiLight.position.set(0, 200, 0);
+        scene.add(hemiLight);
         scene.add(camera);
 
         // Stars

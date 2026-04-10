@@ -287,7 +287,16 @@
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     const shape = createJigsawShape(c, r);
-                    const extrudeSettings = { depth: 0.3, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: 0.05, bevelThickness: 0.05 };
+                    // Reduce bevelSize to make pieces fit tightly without large gaps, and increase curveSegments for perfect tab fitting
+                    const extrudeSettings = { 
+                        depth: 0.2, 
+                        bevelEnabled: true, 
+                        bevelSegments: 2, 
+                        steps: 1, 
+                        bevelSize: 0.01, 
+                        bevelThickness: 0.02,
+                        curveSegments: 32 
+                    };
                     const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
 
                     const matFront = new THREE.MeshPhysicalMaterial({
@@ -381,47 +390,65 @@
             }
 
             function playRomanticSnap(piece) {
-                // Destello romántico (Super brillante y hermoso)
-                piece.material[0].emissive.setHex(0xff3399); 
-                gsap.to(piece.material[0].emissive, { r: 0, g: 0, b: 0, duration: 2.5, ease: "power3.out" });
+                // Heartbeat pulse glow
+                const em = piece.material[0].emissive;
+                const tl = gsap.timeline();
+                tl.to(em, { r: 1.0, g: 0.1, b: 0.5, duration: 0.1 })
+                  .to(em, { r: 0.2, g: 0.0, b: 0.1, duration: 0.1 })
+                  .to(em, { r: 1.0, g: 0.1, b: 0.5, duration: 0.15 })
+                  .to(em, { r: 0.0, g: 0.0, b: 0.0, duration: 2.5, ease: "power2.out" });
 
-                // Aterrizaje mágico y elástico exagerado
+                // Aterrizaje mágico y elástico ultra exagerado (cae desde el aire)
                 gsap.fromTo(piece.position,
-                    { z: 10 },
-                    { z: 0, duration: 1.2, ease: "elastic.out(1, 0.3)" }
+                    { z: 15 },
+                    { z: 0, duration: 2.0, ease: "elastic.out(1, 0.15)" }
                 );
-                // Un "latido" de la pieza al encajar
+                // "Latido" 3D de la pieza al encajar
                 gsap.fromTo(piece.scale,
-                    { x: 1.3, y: 1.3, z: 1.3 },
-                    { x: 1, y: 1, z: 1, duration: 0.8, ease: "elastic.out(1, 0.3)" }
+                    { x: 1.5, y: 1.5, z: 1.5 },
+                    { x: 1, y: 1, z: 1, duration: 1.5, ease: "elastic.out(1, 0.15)" }
                 );
 
-                // Explosión masiva de corazones (Super Demasiado Romántico)
-                const pCount = 50;
+                // --- SISTEMA DE PARTÍCULAS: CORAZONES ROJOS Y ROSAS (Onda expansiva) ---
+                const pCount = 80;
                 const pGeo = new THREE.BufferGeometry();
                 const pPos = new Float32Array(pCount * 3);
+                const pColors = new Float32Array(pCount * 3);
                 const pVel = [];
                 const cx = piece.userData.correctX;
                 const cy = piece.userData.correctY;
+                
+                const colorPalette = [
+                    new THREE.Color('#ff0844'), // Passion Red
+                    new THREE.Color('#ff3399'), // Bright Pink
+                    new THREE.Color('#ffb199'), // Romantic Peach
+                    new THREE.Color('#ffffff')  // Pure White
+                ];
+
                 for (let i = 0; i < pCount; i++) {
-                    pPos[i * 3] = cx + (Math.random() - 0.5) * 5;
-                    pPos[i * 3 + 1] = cy + (Math.random() - 0.5) * 5;
-                    pPos[i * 3 + 2] = Math.random() * 3 + 1;
+                    pPos[i * 3] = cx;
+                    pPos[i * 3 + 1] = cy;
+                    pPos[i * 3 + 2] = 2; // starts slightly above
+                    
+                    const c = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+                    pColors[i*3] = c.r; pColors[i*3+1] = c.g; pColors[i*3+2] = c.b;
+
                     const ang = Math.random() * Math.PI * 2;
-                    const spd = Math.random() * 0.2 + 0.1;
+                    const spd = Math.random() * 0.6 + 0.2; // Shockwave speed
                     pVel.push({
                         x: Math.cos(ang) * spd,
-                        y: Math.sin(ang) * spd + 0.1, // Float up
-                        z: (Math.random() - 0.5) * 0.15
+                        y: Math.sin(ang) * spd,
+                        z: Math.random() * 0.5 + 0.2 // pop upwards
                     });
                 }
                 pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+                pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
 
                 // Crear textura de corazón en canvas
                 const canvas = document.createElement('canvas');
                 canvas.width = 64; canvas.height = 64;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ff2277';
+                ctx.fillStyle = '#ffffff'; // White base to be tinted by vertex colors
                 ctx.beginPath();
                 ctx.moveTo(32, 15); ctx.bezierCurveTo(32, 12, 28, 0, 15, 0);
                 ctx.bezierCurveTo(0, 0, 0, 15, 0, 15); ctx.bezierCurveTo(0, 28, 15, 40, 32, 55);
@@ -430,32 +457,94 @@
                 const heartTex = new THREE.CanvasTexture(canvas);
 
                 const pMat = new THREE.PointsMaterial({
-                    map: heartTex, color: 0xffaadd, size: 2.0,
+                    map: heartTex, size: 2.5, vertexColors: true,
                     transparent: true, depthWrite: false, opacity: 1, blending: THREE.AdditiveBlending
                 });
 
-                const points = new THREE.Points(pGeo, pMat);
-                scene.add(points);
+                const hearts = new THREE.Points(pGeo, pMat);
+                scene.add(hearts);
 
+                // --- SISTEMA DE PARTÍCULAS: POLVO DE ESTRELLAS DE ORO (Aura brillante) ---
+                const starGeo = new THREE.BufferGeometry();
+                const starPos = new Float32Array(50 * 3);
+                const starVel = [];
+                for(let i=0; i<50; i++) {
+                    starPos[i*3] = cx;
+                    starPos[i*3+1] = cy;
+                    starPos[i*3+2] = 1;
+                    const burstAng = Math.random() * Math.PI * 2;
+                    const burstSpd = Math.random() * 0.8 + 0.4; // Very fast blast
+                    starVel.push({
+                        x: Math.cos(burstAng) * burstSpd,
+                        y: Math.sin(burstAng) * burstSpd,
+                        z: Math.random() * 0.2
+                    });
+                }
+                starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+                
+                // Create star/glow circle texture
+                const canvasStar = document.createElement('canvas');
+                canvasStar.width = 32; canvasStar.height = 32;
+                const ctxS = canvasStar.getContext('2d');
+                const grad = ctxS.createRadialGradient(16, 16, 0, 16, 16, 16);
+                grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                grad.addColorStop(0.2, 'rgba(255, 200, 100, 0.8)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctxS.fillStyle = grad;
+                ctxS.fillRect(0,0,32,32);
+                const starTex = new THREE.CanvasTexture(canvasStar);
+
+                const starMat = new THREE.PointsMaterial({
+                    map: starTex, size: 3.0, color: 0xffffff,
+                    transparent: true, depthWrite: false, opacity: 1, blending: THREE.AdditiveBlending
+                });
+                const dust = new THREE.Points(starGeo, starMat);
+                scene.add(dust);
+
+                // --- ANIMACIÓN DE PARTÍCULAS ---
                 const startTime = Date.now();
                 const interval = setInterval(() => {
                     const elapsed = Date.now() - startTime;
-                    if (elapsed > 2500) {
+                    if (elapsed > 3000) {
                         clearInterval(interval);
-                        scene.remove(points);
-                        pGeo.dispose(); pMat.dispose();
+                        scene.remove(hearts); scene.remove(dust);
+                        pGeo.dispose(); pMat.dispose(); starGeo.dispose(); starMat.dispose();
+                        heartTex.dispose(); starTex.dispose();
                         return;
                     }
-                    const pos = points.geometry.attributes.position.array;
+                    
+                    // Animate Hearts
+                    const hPos = hearts.geometry.attributes.position.array;
                     for (let i = 0; i < pCount; i++) {
-                        pos[i * 3] += pVel[i].x;
-                        pos[i * 3 + 1] += pVel[i].y;
-                        pos[i * 3 + 2] += pVel[i].z;
-                        pVel[i].x += Math.sin(elapsed * 0.01 + i) * 0.01; // Fluttering effect
-                        pVel[i].y += 0.001; 
+                        hPos[i * 3] += pVel[i].x;
+                        hPos[i * 3 + 1] += pVel[i].y;
+                        hPos[i * 3 + 2] += pVel[i].z;
+                        
+                        // Fricción y gravedad suave
+                        pVel[i].x *= 0.95;
+                        pVel[i].y *= 0.95;
+                        pVel[i].y += 0.01; // flotan hacia arriba lentamente
+                        
+                        // Flutter
+                        pVel[i].x += Math.sin(elapsed * 0.01 + i) * 0.02;
                     }
-                    points.geometry.attributes.position.needsUpdate = true;
-                    points.material.opacity = 1.0 - (elapsed / 2500);
+                    hearts.geometry.attributes.position.needsUpdate = true;
+                    hearts.material.opacity = 1.0 - (elapsed / 3000);
+                    // Pulsing heart sizes
+                    hearts.material.size = 2.5 + Math.sin(elapsed * 0.02) * 0.5;
+
+                    // Animate Dust
+                    const sPos = dust.geometry.attributes.position.array;
+                    for(let i=0; i<50; i++){
+                        sPos[i*3] += starVel[i].x;
+                        sPos[i*3+1] += starVel[i].y;
+                        sPos[i*3+2] += starVel[i].z;
+                        // Alta fricción para que se detengan rápido como chispas mágicas
+                        starVel[i].x *= 0.85;
+                        starVel[i].y *= 0.85;
+                    }
+                    dust.geometry.attributes.position.needsUpdate = true;
+                    dust.material.opacity = 1.0 - (elapsed / 1500); // fade fast
                 }, 16);
             }
 
@@ -541,71 +630,97 @@
 
         const txtTex = new THREE.CanvasTexture(textCanvas);
         const txtMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(35, 17.5),
-            new THREE.MeshBasicMaterial({ map: txtTex, transparent: true, opacity: 0 })
+            new THREE.PlaneGeometry(45, 22.5),
+            new THREE.MeshBasicMaterial({ map: txtTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending })
         );
-        txtMesh.position.set(0, -6, 25);
-        scene.add(txtMesh);
+        // Attach text to the camera so it always faces the user during the camera orbit!
+        txtMesh.position.set(0, -2, -30);
+        camera.add(txtMesh);
 
         function triggerFinale() {
             document.getElementById('ui-container').style.display = 'none';
             document.getElementById('progress').style.display = 'none';
 
-            // Grand Camera Move & Slow Rotation
-            gsap.to(camera.position, { x: 0, y: -10, z: 75, duration: 6, ease: "power2.inOut" });
+            // 1. FLASH DE SUPERNOVA (Súper iluminación épica)
+            gsap.to(ambientLight, { intensity: 4.5, duration: 1.5, yoyo: true, repeat: 1, ease: "power2.out" });
+            gsap.to(ambientLight, { intensity: 2.0, duration: 2, delay: 3 });
 
-            // Beautiful puzzle transformation (Floating and Pulsing)
+            // 2. ORBITA DE CÁMARA CINEMÁTICA (El mundo gira alrededor del rompecabezas)
+            gsap.to(camera.position, { x: 0, y: -25, z: 90, duration: 8, ease: "power3.inOut" });
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 2.0;
+
+            // 3. TRANSFORMACIÓN MÁGICA Y FLOTANTE DEL ROMPECABEZAS
             pieces.forEach((p, idx) => {
-                gsap.to(p.material[0], { metalness: 0.8, roughness: 0.1, clearcoat: 1.0, duration: 3 });
+                // Hacerlas súper metálicas, brillantes y perfectas (Efecto Cristal de Oro)
+                gsap.to(p.material[0], { metalness: 0.95, roughness: 0.1, clearcoat: 1.0, duration: 4, ease: "power2.inOut" });
 
-                // Emissive pulse like a beating heart across the puzzle
+                // Latido romántico intenso desde el centro
                 gsap.to(p.material[0].emissive, {
-                    r: 0.6, g: 0.05, b: 0.3,
-                    duration: 1.5, yoyo: true, repeat: -1, ease: "sine.inOut",
-                    delay: (p.userData.r + p.userData.c) * 0.1 // wave effect!
+                    r: 0.8, g: 0.1, b: 0.4,
+                    duration: 2.0, yoyo: true, repeat: -1, ease: "sine.inOut",
+                    delay: (p.userData.r + p.userData.c) * 0.1
                 });
 
-                // Lift puzzle up in a wave
+                // Levantamiento en ola y estabilizaciÃ³n flotante unida
                 gsap.to(p.position, { 
-                    z: 5 + Math.sin(p.userData.c * 0.5) * 3, 
-                    duration: 3, 
+                    z: 5, // Todas flotan a la misma altura juntas
+                    duration: 4, 
                     delay: (p.userData.r + p.userData.c) * 0.1, 
-                    ease: "power2.inOut" 
+                    ease: "elastic.out(1, 0.4)" 
                 });
                 
-                // Continuous drifting effect
+                // Rotación leve de todo el bloque
+                gsap.to(p.rotation, {x: -0.1, duration: 4, ease: "power2.inOut"});
+
+                // Oscilación de respiraciÃ³n para que el rompecabezas parezca "vivo"
                 gsap.to(p.position, {
-                    z: "+=2",
-                    y: "+=1",
-                    duration: 2.5,
+                    z: "+=1.5",
+                    duration: 3.0,
                     yoyo: true,
                     repeat: -1,
                     ease: "sine.inOut",
-                    delay: 3 + Math.random()
+                    delay: 4 + Math.random() * 0.5
                 });
             });
 
-            // Lluvia de corazones infinita y majestuosa
+            // 4. TORNADO ÉPICO Y MAJESTUOSO DE CORAZONES EN ESPIRAL
+            const burstCount = 1500;
             const burstGeo = new THREE.BufferGeometry();
-            const burstPos = new Float32Array(1000 * 3);
+            const burstPos = new Float32Array(burstCount * 3);
+            const burstColors = new Float32Array(burstCount * 3);
             const burstVel = [];
-            for (let i = 0; i < 1000; i++) {
-                burstPos[i * 3] = (Math.random() - 0.5) * 120; 
-                burstPos[i * 3 + 1] = -60 - Math.random() * 80; 
-                burstPos[i * 3 + 2] = (Math.random() - 0.5) * 50 + 10;
+            
+            const colorPalette = [
+                new THREE.Color('#ff0844'), new THREE.Color('#ffb199'), 
+                new THREE.Color('#ff3399'), new THREE.Color('#ffffff'),
+                new THREE.Color('#ffea00') // Gold hearts!
+            ];
+
+            for (let i = 0; i < burstCount; i++) {
+                const ang = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 45 + 15; // De 15 a 60 de radio para rodear la foto
+                burstPos[i * 3] = Math.cos(ang) * radius; 
+                burstPos[i * 3 + 1] = Math.sin(ang) * radius; 
+                burstPos[i * 3 + 2] = -80 - Math.random() * 150; // Nace desde lo profundo
+
+                const c = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+                burstColors[i*3] = c.r; burstColors[i*3+1] = c.g; burstColors[i*3+2] = c.b;
+
                 burstVel.push({
-                    x: (Math.random() - 0.5) * 0.2,
-                    y: Math.random() * 0.4 + 0.2, // Float up
-                    z: (Math.random() - 0.5) * 0.2
+                    angSpeed: (Math.random() * 0.015 + 0.005) * (i % 2 === 0 ? 1 : -1), // Doble espiral cruzada
+                    zSpeed: Math.random() * 0.5 + 0.2, // Velocidad a la que sube el tornado
+                    radius: radius,
+                    currentAng: ang
                 });
             }
             burstGeo.setAttribute('position', new THREE.BufferAttribute(burstPos, 3));
+            burstGeo.setAttribute('color', new THREE.BufferAttribute(burstColors, 3));
             
-            // Re-create heart texture for particles
             const canvas2 = document.createElement('canvas');
             canvas2.width = 64; canvas2.height = 64;
             const ctx2 = canvas2.getContext('2d');
-            ctx2.fillStyle = '#ff3366';
+            ctx2.fillStyle = '#ffffff';
             ctx2.beginPath();
             ctx2.moveTo(32, 15); ctx2.bezierCurveTo(32, 12, 28, 0, 15, 0);
             ctx2.bezierCurveTo(0, 0, 0, 15, 0, 15); ctx2.bezierCurveTo(0, 28, 15, 40, 32, 55);
@@ -614,42 +729,40 @@
             const heartTex2 = new THREE.CanvasTexture(canvas2);
 
             const burstMat = new THREE.PointsMaterial({ 
-                map: heartTex2, color: 0xffffff, size: 3.5, 
+                map: heartTex2, size: 2.5, vertexColors: true,
                 transparent: true, depthWrite: false, opacity: 0, blending: THREE.AdditiveBlending 
             });
             const burst = new THREE.Points(burstGeo, burstMat);
             scene.add(burst);
 
-            gsap.to(burstMat, { opacity: 0.9, duration: 4 });
+            gsap.to(burstMat, { opacity: 0.9, duration: 6, ease: "power2.inOut" });
 
             let burstActive = true;
             setInterval(() => {
                 if (!burstActive) return;
                 const pos = burst.geometry.attributes.position.array;
-                for (let i = 0; i < 1000; i++) {
-                    pos[i * 3] += burstVel[i].x;
-                    pos[i * 3 + 1] += burstVel[i].y;
-                    pos[i * 3 + 2] += burstVel[i].z;
-                    // Float wave flutter
-                    pos[i * 3] += Math.sin(Date.now() * 0.001 + i) * 0.05;
+                for (let i = 0; i < burstCount; i++) {
+                    burstVel[i].currentAng += burstVel[i].angSpeed;
                     
-                    if (pos[i * 3 + 1] > 80) {
-                       pos[i * 3 + 1] = -60 - Math.random() * 20; // reset to bottom
+                    pos[i * 3] = Math.cos(burstVel[i].currentAng) * burstVel[i].radius;
+                    pos[i * 3 + 1] = Math.sin(burstVel[i].currentAng) * burstVel[i].radius;
+                    pos[i * 3 + 2] += burstVel[i].zSpeed; // Flota hacia arriba
+                    
+                    // Si sobrepasan el techo, reinician abajo para hacer el tornado infinito
+                    if (pos[i * 3 + 2] > 100) {
+                       pos[i * 3 + 2] = -80 - Math.random() * 40; 
                     }
                 }
                 burst.geometry.attributes.position.needsUpdate = true;
             }, 16);
 
-            // Bring in 3D Text with a pulse
-            document.getElementById('overlay-text').style.opacity = '1';
-            gsap.fromTo(document.getElementById('overlay-text'), {scale: 0.6}, {scale: 1, duration: 3, ease: "elastic.out(1, 0.4)"});
-            
-            gsap.to(txtMesh.material, { opacity: 1, duration: 3, delay: 2 });
-            gsap.to(txtMesh.position, { y: 0, duration: 4, delay: 2, ease: "power3.out" });
-            gsap.fromTo(txtMesh.scale, 
-                { x: 0.5, y: 0.5, z: 0.5 },
-                { x: 1.2, y: 1.2, z: 1.2, duration: 3, delay: 2, ease: "elastic.out(1, 0.4)" }
-            );
+            // 5. APARICIÓN MONUMENTAL DEL TEXTO 3D
+            gsap.to(txtMesh.material, { opacity: 1, duration: 4, delay: 2.5, ease: "sine.inOut" });
+            // Latido constante del texto
+            gsap.to(txtMesh.scale, {
+                x: 1.1, y: 1.1, z: 1.1, 
+                duration: 1.5, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 3
+            });
         }
 
         // Animation Loop

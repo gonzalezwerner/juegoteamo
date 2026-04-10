@@ -304,9 +304,12 @@
 
                     const matFront = new THREE.MeshPhysicalMaterial({
                         map: texture,
-                        roughness: 0.4, // Increased roughness to prevent mirror-like glare
+                        roughness: 0.3, 
                         metalness: 0.1,
-                        clearcoat: 0.1 // Decreased clearcoat so the bright light doesn't blind the user
+                        clearcoat: 0.2,
+                        emissive: 0xffffff,
+                        emissiveMap: texture,
+                        emissiveIntensity: 0.55 // Garantiza que brille siempre por sí misma
                     });
 
                     const pos = geo.attributes.position.array;
@@ -399,7 +402,7 @@
                 tl.to(em, { r: 1.0, g: 0.1, b: 0.5, duration: 0.1 })
                     .to(em, { r: 0.2, g: 0.0, b: 0.1, duration: 0.1 })
                     .to(em, { r: 1.0, g: 0.1, b: 0.5, duration: 0.15 })
-                    .to(em, { r: 0.0, g: 0.0, b: 0.0, duration: 2.5, ease: "power2.out" });
+                    .to(em, { r: 1.0, g: 1.0, b: 1.0, duration: 2.5, ease: "power2.out" });
 
                 // Aterrizaje mágico y elástico (cae desde el aire rebotando en el tablero sin atravesarlo)
                 gsap.fromTo(piece.position,

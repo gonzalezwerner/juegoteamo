@@ -529,7 +529,7 @@
     </div>
 
     <div id="overlay-text">Siempre fuiste tú...</div>
-    <div id="progress" style="display:none;">0 / 1200</div>
+    <div id="progress" style="display:none;">0 / ...</div>
 
     <div id="ui-container" style="display:none;">
         <span class="sp sp-1"></span>
@@ -539,6 +539,7 @@
         <span class="sp sp-5"></span>
         <span class="sp sp-6"></span>
         <button id="btn-group">♥ Agrupar Bordes ♥</button>
+        <button id="btn-save">💖 Guardar Progreso 💖</button>
     </div>
 
     <script>
@@ -741,6 +742,8 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('ui-container').style.display = 'flex';
             document.getElementById('progress').style.display = 'flex';
+            // Correct total shown immediately (300 mobile / 1200 desktop)
+            document.getElementById('progress').innerText = `0 / ${totalPieces}`;
 
             // Build pieces
             const puzzleGroup = new THREE.Group();
@@ -822,6 +825,56 @@
 
             function updateUI() {
                 document.getElementById('progress').innerText = `${placedPieces} / ${totalPieces}`;
+            }
+
+            // === GUARDAR / CARGAR PROGRESO ===
+            const SAVE_KEY = `teamo_progress_${cols}x${rows}`;
+
+            function saveProgress() {
+                const state = pieces.map(p => ({
+                    c: p.userData.c,
+                    r: p.userData.r,
+                    isPlaced: p.userData.isPlaced,
+                    px: p.position.x,
+                    py: p.position.y,
+                    pz: p.position.z,
+                    rz: p.rotation.z
+                }));
+                localStorage.setItem(SAVE_KEY, JSON.stringify({ placed: placedPieces, state }));
+                // Feedback visual
+                const btn = document.getElementById('btn-save');
+                const orig = btn.innerText;
+                btn.innerText = '♥ ¡Guardado! ♥';
+                btn.style.borderColor = 'rgba(80,255,150,.9)';
+                btn.style.color = '#7fffd4';
+                setTimeout(() => {
+                    btn.innerText = orig;
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                }, 1600);
+            }
+
+            function loadProgress() {
+                const raw = localStorage.getItem(SAVE_KEY);
+                if (!raw) return false;
+                try {
+                    const { placed, state } = JSON.parse(raw);
+                    if (!Array.isArray(state)) return false;
+                    state.forEach(saved => {
+                        const piece = pieces.find(p => p.userData.c === saved.c && p.userData.r === saved.r);
+                        if (!piece) return;
+                        piece.position.set(saved.px, saved.py, saved.pz);
+                        piece.rotation.z = saved.rz;
+                        if (saved.isPlaced && !piece.userData.isPlaced) {
+                            piece.userData.isPlaced = true;
+                            piece.position.set(piece.userData.correctX, piece.userData.correctY, 0);
+                            piece.rotation.z = 0;
+                            placedPieces++;
+                        }
+                    });
+                    updateUI();
+                    return placed > 0;
+                } catch(e) { return false; }
             }
 
             function getIntersect(e) {
@@ -1155,6 +1208,11 @@
                     }
                 });
             });
+
+            document.getElementById('btn-save').addEventListener('click', saveProgress);
+
+            // Auto-restore saved progress on load
+            loadProgress();
         };
 
         // 3D Text setup for finale

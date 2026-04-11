@@ -626,9 +626,9 @@
         scene.add(heartConstellation);
         gsap.to(constellationMat, { opacity: 0.6, duration: 4.0, yoyo: true, repeat: -1, ease: "sine.inOut" });
 
-        // Mobile: 15×20 = 300 piezas (4× más grandes). Desktop: 30×40 = 1200.
-        const cols = isMobileDevice ? 15 : 30;
-        const rows = isMobileDevice ? 20 : 40;
+        // Always 30×40 = 1200 pieces. Mobile gets larger puzzleW for visibility.
+        const cols = 30;
+        const rows = 40;
         const totalPieces = cols * rows;
         let placedPieces = 0;
         const pieces = [];

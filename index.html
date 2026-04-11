@@ -547,7 +547,7 @@
 
         // Setup Scene
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x030008, 0.015);
+        scene.fog = new THREE.FogExp2(0x030008, 0.007); // Niebla muy suave — no oscurece al alejar
 
         // Setup Camera
         const isMobileDevice = window.innerWidth < 768;
@@ -564,9 +564,9 @@
 
         const renderScene = new THREE.RenderPass(scene, camera);
         const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloomPass.threshold = 0.98;
-        bloomPass.strength = 0.15; // Muy suave, casi invisible
-        bloomPass.radius = 0.3;
+        bloomPass.threshold = 0.99; // Solo píxeles casi-blancos puros activan bloom
+        bloomPass.strength = 0.12;
+        bloomPass.radius = 0.2;
 
         let composer = new THREE.EffectComposer(renderer);
         composer.addPass(renderScene);
@@ -578,12 +578,12 @@
         controls.maxPolarAngle = Math.PI / 2.1; // Limit pitch
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.4); // Equilibrio: visible lejos, sin deslumbrar cerca
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xfff5e0, 1.0);
+        const directionalLight = new THREE.DirectionalLight(0xfff5e0, 0.8);
         directionalLight.position.set(20, 50, 150);
         scene.add(directionalLight);
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.4);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.5);
         hemiLight.position.set(0, 200, 0);
         scene.add(hemiLight);
         scene.add(camera);
@@ -768,8 +768,10 @@
                         map: texture,
                         roughness: 0.75,
                         metalness: 0.0,
-                        clearcoat: 0.0
-                        // Sin emissive — la imagen se ve natural por las luces de escena
+                        clearcoat: 0.0,
+                        emissive: 0xffffff,
+                        emissiveMap: texture,
+                        emissiveIntensity: 0.28 // Auto-iluminación: claro a cualquier distancia sin deslumbrar
                     });
 
                     const pos = geo.attributes.position.array;

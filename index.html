@@ -766,12 +766,12 @@
 
                     const matFront = new THREE.MeshPhysicalMaterial({
                         map: texture,
-                        roughness: 0.45,
-                        metalness: 0.05,
-                        clearcoat: 0.08,
+                        roughness: 0.7,
+                        metalness: 0.0,
+                        clearcoat: 0.0,
                         emissive: 0xffffff,
                         emissiveMap: texture,
-                        emissiveIntensity: 0.18 // Brillo suave, sin deslumbrar al acercarse
+                        emissiveIntensity: 0.04 // Mínimo glow, imagen natural sin deslumbrar
                     });
 
                     const pos = geo.attributes.position.array;

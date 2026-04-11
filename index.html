@@ -578,9 +578,9 @@
         controls.maxPolarAngle = Math.PI / 2.1; // Limit pitch
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9); // Luz ambiente natural
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.4); // Equilibrio: visible lejos, sin deslumbrar cerca
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xfff5e0, 0.6);
+        const directionalLight = new THREE.DirectionalLight(0xfff5e0, 1.0);
         directionalLight.position.set(20, 50, 150);
         scene.add(directionalLight);
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.4);

@@ -319,7 +319,7 @@
 
         // Setup Camera
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 0, window.innerWidth < 600 ? 135 : 85); // Adjusted for puzzle size and mobile
+        camera.position.set(0, 0, window.innerWidth < 600 ? 88 : 72); // Mobile: closer to make pieces bigger
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -398,8 +398,8 @@
         const pieces = [];
 
         // Aspect ratio of the generated image is roughly square
-        const puzzleW = 40;
-        const puzzleH = (40 / cols) * rows; // keep it proportional
+        const puzzleW = window.innerWidth < 600 ? 58 : 48; // Bigger on mobile = bigger pieces
+        const puzzleH = (puzzleW / cols) * rows; // keep it proportional
         const pieceW = puzzleW / cols;
         const pieceH = puzzleH / rows;
 
@@ -569,7 +569,7 @@
                     };
 
                     const ang = Math.random() * Math.PI * 2;
-                    const rad = puzzleW / 2 + 5 + Math.random() * 25;
+                    const rad = puzzleW / 2 + 8 + Math.random() * (puzzleW * 0.55);
                     mesh.position.set(Math.cos(ang) * rad, Math.sin(ang) * rad, Math.random() * 10);
                     mesh.rotation.z = (Math.random() - 0.5) * 1.5;
 
@@ -869,7 +869,7 @@
                     draggedPiece.position.y - draggedPiece.userData.correctY
                 );
 
-                if (dist < 3.0) {
+                if (dist < pieceW * 1.2) {
                     gsap.to(draggedPiece.position, {
                         x: draggedPiece.userData.correctX,
                         y: draggedPiece.userData.correctY,
@@ -979,7 +979,7 @@
             // === ACTO 2: CÁMARA CINEMÁTICA (zoom out + orbit) ===
             const isMobile = window.innerWidth < 768;
             gsap.to(camera.position, {
-                x: 0, y: -22, z: isMobile ? 148 : 105,
+                x: 0, y: -22, z: isMobile ? puzzleW * 2.6 : puzzleW * 2.0,
                 duration: 9, ease: 'power3.inOut'
             });
             gsap.delayedCall(9.5, () => {

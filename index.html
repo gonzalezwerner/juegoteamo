@@ -540,7 +540,7 @@
         <span class="sp sp-6"></span>
         <button id="btn-group">♥ Agrupar Bordes ♥</button>
         <button id="btn-save">💖 Guardar Progreso 💖</button>
-        <button id="btn-auto">✨ Auto-armar 400 ✨</button>
+        <button id="btn-auto">Auto</button>
     </div>
 
     <script>
@@ -1223,7 +1223,7 @@
                     const j = Math.floor(Math.random() * (i + 1));
                     [unplaced[i], unplaced[j]] = [unplaced[j], unplaced[i]];
                 }
-                const toPlace = unplaced.slice(0, Math.min(400, unplaced.length));
+                const toPlace = unplaced.slice(0, Math.min(40, unplaced.length));
 
                 // Overlay de shimmer dorado
                 const shimmer = document.createElement('div');
@@ -1259,14 +1259,13 @@
                     gsap.to(piece.rotation, { z: 0, duration: 0.5, delay, ease: 'power2.out' });
                 });
 
-                // Feedback en el boton
+                // Deshabilitar permanentemente después de 1 uso
                 const btn = document.getElementById('btn-auto');
                 btn.innerText = '⏳ Armando...';
                 btn.disabled = true;
-                setTimeout(() => {
-                    btn.innerText = '✨ Auto-armar 400 ✨';
-                    btn.disabled = false;
-                }, toPlace.length * 3 + 800);
+                btn.style.opacity = '0.4';
+                btn.style.cursor = 'not-allowed';
+                setTimeout(() => { btn.innerText = 'Auto'; }, toPlace.length * 3 + 800);
             });
 
             // Auto-restore saved progress on load

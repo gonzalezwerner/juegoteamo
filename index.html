@@ -540,6 +540,7 @@
         <span class="sp sp-6"></span>
         <button id="btn-group">♥ Agrupar Bordes ♥</button>
         <button id="btn-save">💖 Guardar Progreso 💖</button>
+        <button id="btn-auto">✨ Auto-armar 400 ✨</button>
     </div>
 
     <script>
@@ -1210,6 +1211,63 @@
             });
 
             document.getElementById('btn-save').addEventListener('click', saveProgress);
+
+            // --- AUTO-ARMAR 400 PIEZAS ---
+            document.getElementById('btn-auto').addEventListener('click', () => {
+                // Tomar piezas no colocadas y mezclarlas al azar
+                const unplaced = pieces.filter(p => !p.userData.isPlaced);
+                if (unplaced.length === 0) return;
+
+                // Barajar y tomar hasta 400
+                for (let i = unplaced.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [unplaced[i], unplaced[j]] = [unplaced[j], unplaced[i]];
+                }
+                const toPlace = unplaced.slice(0, Math.min(400, unplaced.length));
+
+                // Overlay de shimmer dorado
+                const shimmer = document.createElement('div');
+                shimmer.style.cssText = 'position:fixed;inset:0;z-index:99;pointer-events:none;background:radial-gradient(circle,rgba(255,215,0,0.18) 0%,transparent 70%);opacity:0;transition:opacity .4s';
+                document.body.appendChild(shimmer);
+                requestAnimationFrame(() => { shimmer.style.opacity = '1'; });
+                setTimeout(() => {
+                    shimmer.style.transition = 'opacity 1.8s';
+                    shimmer.style.opacity = '0';
+                    setTimeout(() => shimmer.remove(), 2000);
+                }, 500);
+
+                // Animar cada pieza con delay escalonado
+                toPlace.forEach((piece, i) => {
+                    const delay = i * 0.003; // 3ms entre pieza y pieza → 400 = 1.2s total
+                    gsap.to(piece.position, {
+                        x: piece.userData.correctX,
+                        y: piece.userData.correctY,
+                        z: 0.05,
+                        duration: 0.6,
+                        delay,
+                        ease: 'power3.out',
+                        onComplete: () => {
+                            if (!piece.userData.isPlaced) {
+                                piece.userData.isPlaced = true;
+                                piece.rotation.z = 0;
+                                placedPieces++;
+                                updateUI();
+                                if (placedPieces === totalPieces) triggerFinale();
+                            }
+                        }
+                    });
+                    gsap.to(piece.rotation, { z: 0, duration: 0.5, delay, ease: 'power2.out' });
+                });
+
+                // Feedback en el boton
+                const btn = document.getElementById('btn-auto');
+                btn.innerText = '⏳ Armando...';
+                btn.disabled = true;
+                setTimeout(() => {
+                    btn.innerText = '✨ Auto-armar 400 ✨';
+                    btn.disabled = false;
+                }, toPlace.length * 3 + 800);
+            });
 
             // Auto-restore saved progress on load
             loadProgress();

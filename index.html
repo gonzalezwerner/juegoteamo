@@ -539,7 +539,6 @@
         <span class="sp sp-5"></span>
         <span class="sp sp-6"></span>
         <button id="btn-group">♥ Agrupar Bordes ♥</button>
-        <button id="btn-save">💖 Guardar Progreso 💖</button>
 
     </div>
 
@@ -842,17 +841,6 @@
                     rz: p.rotation.z
                 }));
                 localStorage.setItem(SAVE_KEY, JSON.stringify({ placed: placedPieces, state }));
-                // Feedback visual
-                const btn = document.getElementById('btn-save');
-                const orig = btn.innerText;
-                btn.innerText = '♥ ¡Guardado! ♥';
-                btn.style.borderColor = 'rgba(80,255,150,.9)';
-                btn.style.color = '#7fffd4';
-                setTimeout(() => {
-                    btn.innerText = orig;
-                    btn.style.borderColor = '';
-                    btn.style.color = '';
-                }, 1600);
             }
 
             function loadProgress() {
@@ -909,6 +897,7 @@
             }
 
             function playRomanticSnap(piece) {
+                if (navigator.vibrate) navigator.vibrate(50);
                 const cx = piece.userData.correctX;
                 const cy = piece.userData.correctY;
 
@@ -1176,6 +1165,7 @@
 
                     placedPieces++;
                     updateUI();
+                    saveProgress();
 
                     if (placedPieces === totalPieces) triggerFinale();
                 } else {
@@ -1210,7 +1200,7 @@
                 });
             });
 
-            document.getElementById('btn-save').addEventListener('click', saveProgress);
+
 
 
             // Auto-restore saved progress on load

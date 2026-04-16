@@ -790,7 +790,11 @@
                     }
                     geo.attributes.uv.needsUpdate = true;
 
-                    const matSide = new THREE.MeshStandardMaterial({ color: 0x4a0010 });
+                    const matSide = new THREE.MeshStandardMaterial({ 
+                        color: 0x151515, 
+                        roughness: 0.8, 
+                        metalness: 0.2 
+                    });
 
                     geo.translate(-pieceW / 2, -pieceH / 2, 0);
 

@@ -794,6 +794,7 @@
                     geo.translate(-pieceW / 2, -pieceH / 2, 0);
 
                     const mesh = new THREE.Mesh(geo, [matFront, matSide]);
+                    mesh.scale.set(1.015, 1.015, 1.0);
 
                     const isBorder = c === 0 || c === cols - 1 || r === 0 || r === rows - 1;
                     mesh.userData = {

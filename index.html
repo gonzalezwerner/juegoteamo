@@ -737,6 +737,9 @@
         imageObj.src = imageB64;
         imageObj.onload = () => {
             const texture = new THREE.Texture(imageObj);
+            // Hacer un ligero "zoom in" a la textura (recortar 3% de los bordes) para eliminar las líneas punteadas/negras de la imagen original
+            texture.offset.set(0.03, 0.03);
+            texture.repeat.set(0.94, 0.94);
             texture.needsUpdate = true;
             texture.colorSpace = THREE.SRGBColorSpace;
             document.getElementById('loading').style.display = 'none';
@@ -790,10 +793,8 @@
                     }
                     geo.attributes.uv.needsUpdate = true;
 
-                    const matSide = new THREE.MeshStandardMaterial({ 
-                        color: 0x151515, 
-                        roughness: 0.8, 
-                        metalness: 0.2 
+                    const matSide = new THREE.MeshBasicMaterial({ 
+                        color: 0x111111 
                     });
 
                     geo.translate(-pieceW / 2, -pieceH / 2, 0);

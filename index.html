@@ -538,8 +538,8 @@
         <span class="sp sp-4"></span>
         <span class="sp sp-5"></span>
         <span class="sp sp-6"></span>
-        <button id="btn-group">♥ Agrupar Bordes ♥</button>
-
+        <button id="btn-group">♥ Bordes</button>
+        <button id="btn-find">🔍 Buscar Pieza</button>
     </div>
 
     <script>
@@ -849,20 +849,37 @@
                 try {
                     const { placed, state } = JSON.parse(raw);
                     if (!Array.isArray(state)) return false;
+                    
+                    let actualPlaced = 0;
                     state.forEach(saved => {
                         const piece = pieces.find(p => p.userData.c === saved.c && p.userData.r === saved.r);
                         if (!piece) return;
-                        piece.position.set(saved.px, saved.py, saved.pz);
-                        piece.rotation.z = saved.rz;
+                        
+                        // Fix to prevent NaN coords from hiding a piece forever
+                        let px = isNaN(saved.px) ? (Math.random() - 0.5) * 10 : saved.px;
+                        let py = isNaN(saved.py) ? (Math.random() - 0.5) * 10 : saved.py;
+                        let pz = isNaN(saved.pz) ? 5 : saved.pz;
+                        
+                        piece.position.set(px, py, pz);
+                        piece.rotation.z = isNaN(saved.rz) ? 0 : saved.rz;
+                        
                         if (saved.isPlaced && !piece.userData.isPlaced) {
                             piece.userData.isPlaced = true;
                             piece.position.set(piece.userData.correctX, piece.userData.correctY, 0);
                             piece.rotation.z = 0;
-                            placedPieces++;
+                        }
+                        
+                        if (piece.userData.isPlaced) {
+                            actualPlaced++;
                         }
                     });
+                    
+                    placedPieces = actualPlaced;
                     updateUI();
-                    return placed > 0;
+                    
+                    if (placedPieces === totalPieces) triggerFinale();
+                    
+                    return placedPieces > 0;
                 } catch (e) { return false; }
             }
 
@@ -1200,7 +1217,33 @@
                 });
             });
 
-
+            // Rescate de piezas perdidas
+            document.getElementById('btn-find').addEventListener('click', () => {
+                const unplaced = pieces.filter(p => !p.userData.isPlaced);
+                if (unplaced.length > 0) {
+                    unplaced.forEach((p, i) => {
+                        // Limitar la posición Z para que no se oculten
+                        const targetZ = 12 + (i % 5) * 0.5; 
+                        gsap.to(p.position, {
+                            x: (Math.random() - 0.5) * puzzleW * 0.5,
+                            y: (Math.random() - 0.5) * puzzleH * 0.5,
+                            z: targetZ,
+                            duration: 1.5,
+                            ease: "power3.out"
+                        });
+                        gsap.to(p.rotation, { z: 0, duration: 1.5 });
+                        
+                        // Pulso brillante para llamarla
+                        const em = p.material[0].emissive;
+                        gsap.to(em, { r: 1.5, g: 1.5, b: 1.5, duration: 0.4, yoyo: true, repeat: 5 });
+                        
+                        // Restauramos cualquier visibilidad
+                        p.visible = true;
+                        p.material[0].opacity = 1;
+                        p.material[1].opacity = 1;
+                    });
+                }
+            });
 
 
             // Auto-restore saved progress on load

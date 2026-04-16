@@ -834,7 +834,6 @@
             const SAVE_KEY = `teamo_progress_${cols}x${rows}`;
 
             function saveProgress() {
-                if (prankActive) return;
                 const state = pieces.map(p => ({
                     c: p.userData.c,
                     r: p.userData.r,
@@ -878,7 +877,6 @@
             }
 
             function onDown(e) {
-                if (prankActive) return;
                 if (placedPieces === totalPieces) return;
                 getIntersect(e);
 
@@ -1204,129 +1202,11 @@
                     }
                 });
             });
-            // === BROMA PARA LA NOVIA ===
-            let prankActive = false;
-            let prankTapCount = 0;
-            let prankTapTimeout = null;
-            let backupState = null;
-            let backupPlaced = 0;
-            let alertBox = null;
-
-            document.addEventListener('pointerdown', (e) => {
-                prankTapCount++;
-                clearTimeout(prankTapTimeout);
-                
-                if (!prankActive && prankTapCount === 2) {
-                    startPrank();
-                    prankTapCount = 0;
-                } else if (prankActive && prankTapCount === 4) {
-                    endPrank();
-                    prankTapCount = 0;
-                } else {
-                    prankTapTimeout = setTimeout(() => {
-                        prankTapCount = 0;
-                    }, 400); // 400ms max entre cada toque consecutivo
-                }
-            }, { passive: true });
-
-            function startPrank() {
-                if (prankActive || placedPieces === totalPieces) return;
-                prankActive = true;
-
-                // Guardar estado actual en memoria 
-                backupState = pieces.map(p => ({
-                    c: p.userData.c,
-                    r: p.userData.r,
-                    isPlaced: p.userData.isPlaced,
-                    px: p.position.x,
-                    py: p.position.y,
-                    pz: p.position.z,
-                    rz: p.rotation.z
-                }));
-                backupPlaced = placedPieces;
-
-                // Crear alerta falsa de error
-                alertBox = document.createElement('div');
-                alertBox.style.cssText = 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(15,0,0,0.95); color:#ff3333; padding:25px; border:2px solid #ff3333; z-index:1000; font-family:"Courier New", monospace; text-align:center; border-radius:12px; box-shadow: 0 0 20px rgba(255,0,0,0.5); width: 85%; max-width: 380px; pointer-events: none;';
-                alertBox.innerHTML = '<h3 style="margin-top:0; border-bottom: 1px solid #ff3333; padding-bottom: 10px;">⚠️ FATAL ERROR ⚠️</h3><p style="font-size:14px; line-height: 1.5;">Sistema de almacenamiento corrupto.</p><p style="font-size:16px; font-weight:bold; margin-top:15px; animation: glpulse 1s infinite;">¡PROGRESO PERDIDO!<br>REINICIANDO DE 0...</p>';
-                document.body.appendChild(alertBox);
-
-                // Desactivar controles temporalmente
-                if (controls) controls.enabled = false;
-
-                // Esparcir piezas violentamente simulando el error
-                placedPieces = 0;
-                updateUI();
-                pieces.forEach(p => {
-                    p.userData.isPlaced = false;
-                    const ang = Math.random() * Math.PI * 2;
-                    const rad = puzzleW / 2 + 15 + Math.random() * (puzzleW * 0.8);
-                    gsap.to(p.position, {
-                        x: Math.cos(ang) * rad,
-                        y: Math.sin(ang) * rad,
-                        z: Math.random() * 15,
-                        duration: 1.5,
-                        ease: "power2.inOut"
-                    });
-                    gsap.to(p.rotation, {
-                        x: (Math.random() - 0.5) * 1.5,
-                        y: (Math.random() - 0.5) * 1.5,
-                        z: (Math.random() - 0.5) * 3,
-                        duration: 1.5
-                    });
-                });
-            }
-
-            function endPrank() {
-                if (!prankActive || !alertBox) return;
-
-                alertBox.style.color = '#ffc8e5';
-                alertBox.style.borderColor = '#ff3a80';
-                alertBox.style.boxShadow = '0 0 20px rgba(255,58,128,0.6)';
-                alertBox.style.background = 'rgba(20,0,15,0.95)';
-                alertBox.innerHTML = '<h3 style="margin-top:0; border-bottom: 1px solid #ff3a80; padding-bottom: 10px; color:#ff3a80;">¡ES UNA BROMA AMOR! 😜</h3><p style="font-size:15px; line-height: 1.5; font-family:\'Raleway\', sans-serif;">Caíste... ¡Jamás te borraría todo tu hermoso esfuerzo! ❤️</p><p style="font-size:16px; font-weight:bold; margin-top:15px; font-family:\'Dancing Script\', cursive;">Restaurando magia...</p>';
-                
-                // Restaurar las piezas a su estado original
-                pieces.forEach((p, idx) => {
-                    const saved = backupState[idx];
-                    p.userData.isPlaced = saved.isPlaced;
-                    gsap.to(p.position, {
-                        x: saved.px,
-                        y: saved.py,
-                        z: saved.pz,
-                        duration: 2.5,
-                        ease: "elastic.out(1, 0.5)"
-                    });
-                    gsap.to(p.rotation, {
-                        x: 0,
-                        y: 0,
-                        z: saved.rz,
-                        duration: 2.5,
-                        ease: "power2.out"
-                    });
-                });
-
-                // Limpiar todo y volver a la normalidad
-                setTimeout(() => {
-                    placedPieces = backupPlaced;
-                    updateUI();
-                    
-                    gsap.to(alertBox, {
-                        opacity: 0,
-                        duration: 0.5,
-                        onComplete: () => {
-                            if (alertBox && alertBox.parentNode) {
-                                alertBox.parentNode.removeChild(alertBox);
-                            }
-                            alertBox = null;
-                            prankActive = false;
-                            if (controls) controls.enabled = true;
-                        }
-                    });
-                }, 4000);
-            }
-
             // Auto-restore saved progress on load
+
+
+
+
             loadProgress();
         };
 

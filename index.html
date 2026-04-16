@@ -737,9 +737,6 @@
         imageObj.src = imageB64;
         imageObj.onload = () => {
             const texture = new THREE.Texture(imageObj);
-            // Hacer un ligero "zoom in" a la textura (recortar 3% de los bordes) para eliminar las líneas punteadas/negras de la imagen original
-            texture.offset.set(0.03, 0.03);
-            texture.repeat.set(0.94, 0.94);
             texture.needsUpdate = true;
             texture.colorSpace = THREE.SRGBColorSpace;
             document.getElementById('loading').style.display = 'none';
@@ -758,11 +755,8 @@
                     // Reduce bevelSize to make pieces fit tightly without large gaps, and increase curveSegments for perfect tab fitting
                     const extrudeSettings = {
                         depth: 0.2,
-                        bevelEnabled: true,
-                        bevelSegments: 1,
+                        bevelEnabled: false,
                         steps: 1,
-                        bevelSize: 0.01,
-                        bevelThickness: 0.02,
                         curveSegments: 12
                     };
                     const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
